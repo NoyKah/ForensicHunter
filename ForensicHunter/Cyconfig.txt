@@ -1,0 +1,14 @@
+force	C:\$Extend\$UsnJrnl:$J
+glob	C:\ProgramData\Microsoft\Search\Data\Applications\Windows\**
+glob	C:\Windows\Temp\**
+glob	C:\Users\*\AppData\Local\Microsoft\Windows\Notifications\wpndatabase.db
+glob	C:\Users\*\AppData\Local\Microsoft\Terminal Server Client\Cache\**
+glob	C:\Users\*\AppData\Local\Google\Chrome\User Data\Default\*
+glob	C:\Users\*\AppData\Roaming\Mozilla\Firefox\Profiles\*\*
+glob	C:\Users\*\AppData\Local\Microsoft\Edge\User Data\Default\*
+glob	C:\Users\*\AppData\Roaming\Opera Software\Opera Stable\*
+glob	C:\Users\*\AppData\Local\Microsoft\Outlook\*.ost 
+glob	C:\Users\*\Documents\Outlook Files\*.pst
+glob	C:\Users\*\AppData\Local\FileZilla\logs\**
+glob	C:\Users\*\Downloads\**
+glob	C:\Users\*\AppData\Local\Temp\**
