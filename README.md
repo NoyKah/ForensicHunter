@@ -10,7 +10,7 @@ The multi-license setup provides flexibility for users while upholding the open-
 
 
 # Special Thanks
-https://ericzimmerman.github.io/#!index.md
-https://github.com/orlikoski/CyLR
-https://github.com/strozfriedberg/sidr
-https://github.com/ANSSI-FR/bmc-tools
+- https://ericzimmerman.github.io/#!index.md
+- https://github.com/orlikoski/CyLR
+- https://github.com/strozfriedberg/sidr
+- https://github.com/ANSSI-FR/bmc-tools
