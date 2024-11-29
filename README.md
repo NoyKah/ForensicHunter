@@ -79,22 +79,24 @@ ForensicHunter.exe [flag]
 Amcache Hunter is a Python script integrated into ForensicHunter that enhances the tool's capability to identify potentially malicious files. It leverages the VirusTotal API to assess the legitimacy of files based on their SHA1 hashes extracted from the Amcache data.
 How It Works
 
-    #### Data Extraction:
+**Data Extraction**
         The script reads the Amcache_UnassociatedFileEntries.csv file located in the Artifacts\Amcache directory. This CSV contains entries of files with their respective SHA1 hashes.
 
-    #### VirusTotal API Integration:
+**VirusTotal API Integration**
         API Key Requirement: The script requires a VirusTotal API key. You can obtain one by creating an account on VirusTotal.
         Rate Limiting: To comply with VirusTotal's API rate limits, the script includes a 15-second delay (time.sleep(15)) between each API request.
 
-    #### SHA1 Hash Checking:
+**SHA1 Hash Checking**
         For each SHA1 hash in the CSV, the script queries the VirusTotal API to determine if the file is recognized as malicious.
-        Response Handling:
-            Malicious Files: If VirusTotal reports malicious detections (i.e., the number of malicious detections is greater than 0), the file details are added to the output CSV.
-            Undetected Files: If the file is not found in VirusTotal's database (HTTP 404 error), it's recorded in the output CSV as "Not Found" and "Undetected". These files could be potentially malicious and might have never been uploaded to VirusTotal.
+        
+**Response Handling**
+*Malicious Files:* If VirusTotal reports malicious detections (i.e., the number of malicious detections is greater than 0), the file details are added to the output CSV.
+*Undetected Files:* If the file is not found in VirusTotal's database (HTTP 404 error), it's recorded in the output CSV as "Not Found" and "Undetected". These files could be potentially malicious and might have never been uploaded to VirusTotal.
 
-    #### CSV Reporting:
+**CSV Reporting:**
         The script compiles the results into AmcacheHunter_Results.csv located in the Artifacts directory.
-        #### Fields Included:
+        
+*Fields Included:*
             FullPath: The full path of the file on the system.
             SHA1: The SHA1 hash of the file.
             FileKeyLastWriteTimestamp: The timestamp of the last write operation.
@@ -107,13 +109,13 @@ How It Works
 
 The IOC Search script, Find.py, is a versatile Python tool designed to efficiently locate specific words or Indicators of Compromise (IOCs) within CSV files across directories. This script is particularly useful for cybersecurity professionals, data analysts, and anyone needing to scan large datasets for specific indicators or keywords.
 
-#### Key Features
+**Key Features**
     Recursive Directory Traversal: Automatically searches through all subdirectories starting from a specified root directory to find CSV files.
     Flexible Search Criteria: Allows for case-insensitive searching of any specified word within the CSV files.
     Customizable Output: Users can define the name of the output CSV file and choose to include the source file path for each match.
     Robust Error Handling: Gracefully manages potential issues such as unreadable files or missing directories, providing informative feedback to the user.
 
-#### Command-Line Interface (CLI) Syntax
+**Command-Line Interface (CLI) Syntax**
     Basic Usage:
  ```cmd
     python Find.py word [root_dir] [-o OUTPUT] [--add-source]
@@ -124,18 +126,18 @@ The IOC Search script, Find.py, is a versatile Python tool designed to efficient
         -o or --output (optional): Defines the name of the output CSV file where results will be saved. Defaults to IOC.csv if not provided.
         --add-source (optional flag): When included, appends a Source_File column to the output CSV, indicating the origin of each matching row.
  ```
-#### Usage Examples
+**Usage Examples**
 
 Example 1: Search for "phishing" within the /data/logs directory and save results to phishing_results.csv.
- ```cmd
+```cmd
 python Find.py phishing /data/logs -o phishing_results.csv
- ```
+```
 Example 2: Search for "ransomware" and include the source file path in the output.
- ```cmd
+```cmd
 python Find.py ransomware --add-source
- ```
+```
 
-#### Output Details
+**Output Details**
 
     The resulting CSV file will contain all rows from the scanned CSV files where the specified word was found.
     If the --add-source flag is used, each row will include an additional column named Source_File indicating the file path of the CSV where the match was located.
@@ -157,3 +159,6 @@ Each license is included in the repository, allowing users to review the applica
 - https://github.com/orlikoski/CyLR
 - https://github.com/strozfriedberg/sidr
 - https://github.com/ANSSI-FR/bmc-tools
+
+
+
