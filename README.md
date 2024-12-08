@@ -65,7 +65,7 @@ Command-Line Flags
 You can run ForensicHunter with specific flags to perform desired actions directly.
 Available Flags
 ```cmd
-ForensicHunter.exe [flag]
+ForensicHunter.bat [flag]
     --am: Run Amcache Hunter after the analysis function.
     --ac: Perform Acquisition.
     --io: Run IOC Search for the specified keyword.
