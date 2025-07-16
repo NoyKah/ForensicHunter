@@ -92,7 +92,7 @@ set "artifacts_dir=%script_dir%Artifacts"
 set "users_dir=%filepath%\Users"
 timeout /t 3 /nobreak >nul
 echo Parsing MFT and USNJournal...
-MFTECmd.exe -f "%filepath%\$Extend\$J" -m "%filepath%\$MFT" --csv "Artifacts\MFT and USNJournal" >nul 2>>errors.txt
+MFTECmd.exe -f "%filepath%\$Extend\$J" -m "%filepath%\$MFT" --csv "Artifacts\MFT and USNJournal"
 echo Parsing Shimcache...
 AppCompatCacheParser.exe -f "%filepath%\Windows\System32\config\SYSTEM" --csv "Artifacts\Shimcache" --csvf "Shimcache.csv" >nul 2>>errors.txt
 echo ---------------------------------------
@@ -318,6 +318,26 @@ for /d %%u in ("%users_dir%\*") do (
         SBECmd.exe -d "Artifacts\Users Registry Hives\!username!" >nul 2>>errors.txt --csv "Artifacts\Shellbags" --csvf "!username!.csv" >nul 2>>errors.txt
 	)
 ) 
+
+echo Parsing Browser Logs...
+for /d %%u in ("%users_dir%\*") do (
+	if /i not "%%u"=="%filepath%\Users\Public" if /i not "%%u"=="%filepath%\Users\Default" (
+		set "tempPath=%%u"
+        set "username=!tempPath:*Users=\!"
+        set "username=!username:\=!"
+        python WBHistory2CSV.py --browser chrome --file "Artifacts\Chrome History\!username!\History" --output "Artifacts\Chrome History\!username!_Parsed History" >nul 2>>errors.txt
+		python WBHistory2CSV.py --browser edge --file "Artifacts\Edge History\!username!\History" --output "Artifacts\Edge History\!username!_Parsed History" >nul 2>>errors.txt
+		python WBHistory2CSV.py --browser opera --file "Artifacts\Opera History\!username!\History" --output "Artifacts\Opera History\!username!_Parsed History" >nul 2>>errors.txt
+		set baseDir="Artifacts\Firefox History\!username!"
+		set placesPath=
+		for /D %%d in (!baseDir!\*) do (
+			if exist "%%d\places.sqlite" (
+				set placesPath=%%d\places.sqlite
+				python WBHistory2CSV.py --browser firefox --file "!placesPath!" --output "Artifacts\Firefox History\!username!_Parsed History" >nul 2>>errors.txt
+			)
+		)
+	)
+)
 echo ---------------------------------------
 echo [####################]100%%
 echo ---------------------------------------
@@ -343,7 +363,9 @@ for /d %%D in ("%artifacts_dir%\*") do (
     if "!size_bytes!" GTR "0" (
         echo Directory: %%~nD - Size: !size_bytes! - Collected Successfully
         echo ---------------------------------------
-    )
+    ) else (
+		rd /s /q "Artifacts\%%~nD"
+	)
 )
 
 echo.
@@ -355,12 +377,14 @@ if "%run_hayabusa%"=="1" (
 	hayabusa-2.18.0-win-aarch64.exe update-rules -q
 	echo Running Hayabusa...
 	hayabusa-2.18.0-win-aarch64.exe csv-timeline -d "Artifacts\Event Logs" -a -A -Q -N -w -o "Artifacts\Detection-Hayabusa.csv"
+	echo ====================================================================================
 )
 
 :: Run Amcache Hunter (--am flag)
 if "%run_amcache%"=="1" (
     echo Running Amcache Hunter...
     python AmcacheHunter.py
+	echo ====================================================================================
 )
 
 :: Run IOC search (--io flag)
@@ -368,7 +392,9 @@ if "%run_ioc%"=="1" (
 	goto :get_search_term
 )
 
-echo ====================================================================================
+
+
+
 
 REM Loop for repeated IOC searches
 :search_prompt

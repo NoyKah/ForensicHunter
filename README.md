@@ -33,12 +33,13 @@ Before running the script, ensure that the following dependencies are installed 
   
   Download and install Python 3 from the official [Python website](https://www.python.org/downloads/).
 
-- **pandas Python Module**
+- **pandas and requests Python Module**
   
-  Install the `pandas` module using `pip`. You can install it by running the following command in your terminal or command prompt:
+  Install the `pandas` and `requests` module using `pip`. You can install it by running the following command in your terminal or command prompt:
 
 ```bash
   pip install pandas
+  pip install requests
 ```
 
 ## Features
@@ -143,6 +144,13 @@ python Find.py ransomware --add-source
     If the --add-source flag is used, each row will include an additional column named Source_File indicating the file path of the CSV where the match was located.
     If no matches are found, the script will notify the user accordingly without generating an output file.
 
+### WBHistory2CSV Integration
+
+Parses browser and download history, converts timestamps to UTC. No additional flags required.
+
+**Fields Included:**
+- `URL`, `Title`, `Visit Time`, `Visit Count`, `Referrer`, `Transition Type`, `Source File`
+
 ## License
 
 The project incorporates components licensed under the following licenses:
@@ -159,6 +167,7 @@ Each license is included in the repository, allowing users to review the applica
 - https://github.com/orlikoski/CyLR
 - https://github.com/strozfriedberg/sidr
 - https://github.com/ANSSI-FR/bmc-tools
+- https://github.com/GuyEldad/WBHistory2CSV
 
 
 
