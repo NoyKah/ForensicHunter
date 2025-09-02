@@ -10,7 +10,6 @@ if "%~1"=="/?" (
     echo   --am         Run Amcache Hunter after the analyze function
     echo   --ac         Perform Acquisition
     echo   --io         Run IOC search for the specified WORD
-    echo   --ha         Run Hayabusa after the analyze function
     exit /b
 )
                                                                                    
@@ -18,14 +17,12 @@ if "%~1"=="/?" (
 set "run_amcache=0"
 set "run_acquisition=0"
 set "run_ioc=0"
-set "run_hayabusa=0"
 
 :: Parse command-line arguments
 for %%A in (%*) do (
     if /i "%%~A"=="--am" set "run_amcache=1"
     if /i "%%~A"=="--ac" set "run_acquisition=1"
     if /i "%%~A"=="--io" set "run_ioc=1"
-	if /i "%%~A"=="--ha" set "run_hayabusa=1"
 )
 
 :: Perform Acquisition (--ac flag)
@@ -92,7 +89,7 @@ set "artifacts_dir=%script_dir%Artifacts"
 set "users_dir=%filepath%\Users"
 timeout /t 3 /nobreak >nul
 echo Parsing MFT and USNJournal...
-MFTECmd.exe -f "%filepath%\$Extend\$J" -m "%filepath%\$MFT" --csv "Artifacts\MFT and USNJournal"
+MFTECmd.exe -f "%filepath%\$Extend\$J" -m "%filepath%\$MFT" --csv "Artifacts\MFT and USNJournal" >nul 2>>errors.txt
 echo Parsing Shimcache...
 AppCompatCacheParser.exe -f "%filepath%\Windows\System32\config\SYSTEM" --csv "Artifacts\Shimcache" --csvf "Shimcache.csv" >nul 2>>errors.txt
 echo ---------------------------------------
@@ -107,8 +104,6 @@ SrumECmd.exe -f "%filepath%\Windows\System32\SRU\SRUDB.dat" -r "%filepath%\Windo
 echo ---------------------------------------
 echo [####]20%%
 echo ---------------------------------------
-echo Parsing Search Index...
-sidr.exe -f csv -o "Artifacts\Search Index" "%filepath%\ProgramData\Microsoft\Search\Data\Applications\Windows" >nul 2>>errors.txt
 echo Collecting Registry Hives...
 mkdir "Artifacts\Registry Hives" && copy "%filepath%\Windows\System32\config\*" "Artifacts\Registry Hives" >nul 2>>errors.txt
 echo Collecting Event Logs...
@@ -122,21 +117,25 @@ echo Parsing Event Logs...
 EvtxECmd.exe -d "Artifacts\Event Logs" --csv "Artifacts\Parsed Event Logs" --csvf "Parsed_Logs.csv" >nul 2>>errors.txt
 for /d %%u in ("%users_dir%\*") do (
     if /i not "%%u"=="%filepath%\Users\Public" if /i not "%%u"=="%filepath%\Users\Default" (
-		set "tempPath=%%u"
-        set "username=!tempPath:*Users=\!"
-        set "username=!username:\=!"
-		echo Parsing !username!'s LNK Files...
-        LECmd.exe -d "%%u\AppData\Roaming\Microsoft\Windows\Recent" --csv "Artifacts\LNK Files" --csvf "!username!.csv" >nul 2>>errors.txt	
-	)
-) 
+        set "tempPath=%%u"
+        if "!tempPath:~-1!"=="\" set "tempPath=!tempPath:~0,-1!"
+        for %%x in ("!tempPath!") do (
+            set "username=%%~nx"
+        )
+        echo Parsing !username!'s LNK Files...
+        LECmd.exe -d "%%u\AppData\Roaming\Microsoft\Windows\Recent" --csv "Artifacts\LNK Files" --csvf "!username!.csv" >nul 2>>errors.txt
+    )
+)
+
 echo ---------------------------------------
 echo [########]40%%
 echo ---------------------------------------
 for /d %%u in ("%users_dir%\*") do (
     if /i not "%%u"=="%filepath%\Users\Public" if /i not "%%u"=="%filepath%\Users\Default" (
 		set "tempPath=%%u"
-        set "username=!tempPath:*Users=\!"
-        set "username=!username:\=!"
+		for %%x in ("!tempPath!") do (
+			set "username=%%~nx"
+		)
 		echo Parsing !username!'s Jumplists - Automatic Destinations...
         JLECmd.exe -d "%%u\AppData\Roaming\Microsoft\Windows\Recent\AutomaticDestinations" --csv "Artifacts\Jumplists" --csvf "Auto_!username!.csv" >nul 2>>errors.txt
 	)
@@ -144,17 +143,19 @@ for /d %%u in ("%users_dir%\*") do (
 for /d %%u in ("%users_dir%\*") do (
     if /i not "%%u"=="%filepath%\Users\Public" if /i not "%%u"=="%filepath%\Users\Default" (
 		set "tempPath=%%u"
-        set "username=!tempPath:*Users=\!"
-        set "username=!username:\=!"
+		for %%x in ("!tempPath!") do (
+			set "username=%%~nx"
+		)
 		echo Parsing !username!'s Jumplists - Custom Destinations...
         JLECmd.exe -d "%%u\AppData\Roaming\Microsoft\Windows\Recent\CustomDestinations" --csv "Artifacts\Jumplists" --csvf "Auto_!username!.csv" >nul 2>>errors.txt
 	)
 )   
 for /d %%u in ("%users_dir%\*") do (
     if /i not "%%u"=="%filepath%\Users\Public" if /i not "%%u"=="%filepath%\Users\Default" (
-        set "tempPath=%%u"
-        set "username=!tempPath:*Users=\!"
-        set "username=!username:\=!"
+		set "tempPath=%%u"
+		for %%x in ("!tempPath!") do (
+			set "username=%%~nx"
+		)
 		echo Collecting !username!'s Windows Notification DB...
         mkdir "Artifacts\Windows Notification DB\!username!" && copy "%%u\AppData\Local\Microsoft\Windows\Notifications\wpndatabase.db" "Artifacts\Windows Notification DB\!username!" >nul 2>>errors.txt	
 	)
@@ -165,17 +166,9 @@ echo ---------------------------------------
 for /d %%u in ("%users_dir%\*") do (
     if /i not "%%u"=="%filepath%\Users\Public" if /i not "%%u"=="%filepath%\Users\Default" (
 		set "tempPath=%%u"
-        set "username=!tempPath:*Users=\!"
-        set "username=!username:\=!"
-		echo Collecting !username!'s RDP Cache...
-		python bmc-tools.py -s "%%u\AppData\Local\Microsoft\Terminal Server Client\Cache" -d "Artifacts\RDP Cache\!username!" -b >nul 2>>errors.txt
-	)
-) 
-for /d %%u in ("%users_dir%\*") do (
-    if /i not "%%u"=="%filepath%\Users\Public" if /i not "%%u"=="%filepath%\Users\Default" (
-		set "tempPath=%%u"
-        set "username=!tempPath:*Users=\!"
-        set "username=!username:\=!"
+		for %%x in ("!tempPath!") do (
+			set "username=%%~nx"
+		)
 		echo Collecting !username!'s Chrome History...
 		mkdir "Artifacts\Chrome History\!username!\" >nul 2>>errors.txt && xcopy "%%u\AppData\Local\Google\Chrome\User Data\Default" "Artifacts\Chrome History\!username!\"  /E /I >nul 2>>errors.txt
 	)
@@ -183,8 +176,9 @@ for /d %%u in ("%users_dir%\*") do (
 for /d %%u in ("%users_dir%\*") do (
     if /i not "%%u"=="%filepath%\Users\Public" if /i not "%%u"=="%filepath%\Users\Default" (
 		set "tempPath=%%u"
-        set "username=!tempPath:*Users=\!"
-        set "username=!username:\=!"
+		for %%x in ("!tempPath!") do (
+			set "username=%%~nx"
+		)
 		echo Collecting !username!'s Firefox History...
 		mkdir "Artifacts\Firefox History\!username!\" >nul 2>>errors.txt&& xcopy "%%u\AppData\Roaming\Mozilla\Firefox\Profiles" "Artifacts\Firefox History\!username!\"  /E /I >nul 2>>errors.txt
 	)
@@ -195,8 +189,9 @@ echo ---------------------------------------
 for /d %%u in ("%users_dir%\*") do (
     if /i not "%%u"=="%filepath%\Users\Public" if /i not "%%u"=="%filepath%\Users\Default" (
 		set "tempPath=%%u"
-        set "username=!tempPath:*Users=\!"
-        set "username=!username:\=!"
+		for %%x in ("!tempPath!") do (
+			set "username=%%~nx"
+		)
 		echo Collecting !username!'s Edge History...
 		mkdir "Artifacts\Edge History\!username!\" >nul 2>>errors.txt&& xcopy "%%u\AppData\Local\Microsoft\Edge\User Data\Default" "Artifacts\Edge History\!username!\"  /E /I >nul 2>>errors.txt
 	)
@@ -204,17 +199,19 @@ for /d %%u in ("%users_dir%\*") do (
 for /d %%u in ("%users_dir%\*") do (
     if /i not "%%u"=="%filepath%\Users\Public" if /i not "%%u"=="%filepath%\Users\Default" (
 		set "tempPath=%%u"
-        set "username=!tempPath:*Users=\!"
-        set "username=!username:\=!"
+		for %%x in ("!tempPath!") do (
+			set "username=%%~nx"
+		)
 		echo Collecting !username!'s Opera History...
 		mkdir "Artifacts\Opera History\!username!\" >nul 2>>errors.txt && xcopy "%%u\AppData\Roaming\Opera Software\Opera Stable" "Artifacts\Opera History\!username!\"  /E /I >nul 2>>errors.txt
 	)
 ) 
 for /d %%u in ("%users_dir%\*") do (
     if /i not "%%u"=="%filepath%\Users\Public" if /i not "%%u"=="%filepath%\Users\Default" (
-	    set "tempPath=%%u"
-        set "username=!tempPath:*Users=\!"
-        set "username=!username:\=!"
+		set "tempPath=%%u"
+		for %%x in ("!tempPath!") do (
+			set "username=%%~nx"
+		)
 		echo Collecting !username!'s Registry Hives - USRclass.dat...
 		mkdir "Artifacts\Users Registry Hives\!username!" >nul 2>>errors.txt && copy "%%u\AppData\Local\Microsoft\Windows\usrclass.dat*" "Artifacts\Users Registry Hives\!username!" >nul 2>>errors.txt
 	)
@@ -225,8 +222,9 @@ echo ---------------------------------------
 for /d %%u in ("%users_dir%\*") do (
     if /i not "%%u"=="%filepath%\Users\Public" if /i not "%%u"=="%filepath%\Users\Default" (
 		set "tempPath=%%u"
-        set "username=!tempPath:*Users=\!"
-        set "username=!username:\=!"
+		for %%x in ("!tempPath!") do (
+			set "username=%%~nx"
+		)
 		echo Collecting !username!'s Registry Hives - NTuser.dat...
 		copy "%%u\ntuser.dat*" "Artifacts\Users Registry Hives\!username!" >nul 2>>errors.txt
 	)
@@ -234,8 +232,9 @@ for /d %%u in ("%users_dir%\*") do (
 for /d %%u in ("%users_dir%\*") do (
     if /i not "%%u"=="%filepath%\Users\Public" if /i not "%%u"=="%filepath%\Users\Default" (
 		set "tempPath=%%u"
-        set "username=!tempPath:*Users=\!"
-        set "username=!username:\=!"
+		for %%x in ("!tempPath!") do (
+			set "username=%%~nx"
+		)
 		echo Collecting !username!'s Outlook OST...
 		mkdir "Artifacts\Outlook\!username! Outlook OST" && copy "%%u\AppData\Local\Microsoft\Outlook\*.ost" "Artifacts\Outlook\!username! Outlook OST" >nul 2>>errors.txt
 	)
@@ -243,8 +242,9 @@ for /d %%u in ("%users_dir%\*") do (
 for /d %%u in ("%users_dir%\*") do (
     if /i not "%%u"=="%filepath%\Users\Public" if /i not "%%u"=="%filepath%\Users\Default" (
 		set "tempPath=%%u"
-        set "username=!tempPath:*Users=\!"
-        set "username=!username:\=!"
+		for %%x in ("!tempPath!") do (
+			set "username=%%~nx"
+		)
 		echo Collecting !username!'s Outlook PST...
 		mkdir "Artifacts\Outlook\!username! Outlook PST" && copy "%%u\Documents\Outlook Files\*.pst" "Artifacts\Outlook\!username! Outlook PST" >nul 2>>errors.txt
 	)
@@ -264,8 +264,9 @@ for /d %%u in ("%filepath%\$Recycle.Bin\*") do (
 for /d %%u in ("%users_dir%\*") do (
     if /i not "%%u"=="%filepath%\Users\Public" if /i not "%%u"=="%filepath%\Users\Default" (
 		set "tempPath=%%u"
-        set "username=!tempPath:*Users=\!"
-        set "username=!username:\=!"
+		for %%x in ("!tempPath!") do (
+			set "username=%%~nx"
+		)
 		echo Collecting !username!'s Filezilla Logs...
 		mkdir "Artifacts\Filezilla\!username! logs" >nul 2>>errors.txt && xcopy "%%u\AppData\Local\FileZilla\logs" "Artifacts\Filezilla\!username! logs" /E /I >nul 2>>errors.txt
 	)
@@ -273,8 +274,9 @@ for /d %%u in ("%users_dir%\*") do (
 for /d %%u in ("%users_dir%\*") do (
     if /i not "%%u"=="%filepath%\Users\Public" if /i not "%%u"=="%filepath%\Users\Default" (
 		set "tempPath=%%u"
-        set "username=!tempPath:*Users=\!"
-        set "username=!username:\=!"
+		for %%x in ("!tempPath!") do (
+			set "username=%%~nx"
+		)
 		echo Collecting !username!'s Startup Directory...
 		mkdir "Artifacts\Startup Directory\!username!\" >nul 2>>errors.txt && copy "%%u\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\*" "Artifacts\Startup Directory\!username!\" >nul 2>>errors.txt
 	)
@@ -285,8 +287,9 @@ echo ---------------------------------------
 for /d %%u in ("%users_dir%\*") do (
     if /i not "%%u"=="%filepath%\Users\Public" if /i not "%%u"=="%filepath%\Users\Default" (
 		set "tempPath=%%u"
-        set "username=!tempPath:*Users=\!"
-        set "username=!username:\=!"
+		for %%x in ("!tempPath!") do (
+			set "username=%%~nx"
+		)
 		echo Collecting !username!'s Downloads Directory...
 		mkdir "Artifacts\Downloads Directory\!username!\" >nul 2>>errors.txt && xcopy "%%u\Downloads\*" "Artifacts\Downloads Directory\!username!\" /E /I >nul 2>>errors.txt
 	)
@@ -294,8 +297,9 @@ for /d %%u in ("%users_dir%\*") do (
 for /d %%u in ("%users_dir%\*") do (
     if /i not "%%u"=="%filepath%\Users\Public" if /i not "%%u"=="%filepath%\Users\Default" (
 		set "tempPath=%%u"
-        set "username=!tempPath:*Users=\!"
-        set "username=!username:\=!"
+		for %%x in ("!tempPath!") do (
+			set "username=%%~nx"
+		)
 		echo Collecting !username!'s Temp Directory...
 		mkdir "Artifacts\User's Temp Directory\!username!\" >nul 2>>errors.txt && xcopy "%%u\AppData\Local\Temp" "Artifacts\User's Temp Directory\!username!\" /E /I >nul 2>>errors.txt
 	)
@@ -303,8 +307,9 @@ for /d %%u in ("%users_dir%\*") do (
 for /d %%u in ("%users_dir%\*") do (
     if /i not "%%u"=="%filepath%\Users\Public" if /i not "%%u"=="%filepath%\Users\Default" (
 		set "tempPath=%%u"
-        set "username=!tempPath:*Users=\!"
-        set "username=!username:\=!"
+		for %%x in ("!tempPath!") do (
+			set "username=%%~nx"
+		)
 		echo Collecting !username!'s PowerShell History - PSReadLine...
 		mkdir "Artifacts\PSReadLine\!username!\" >nul 2>>errors.txt && xcopy "%%u\AppData\Roaming\Microsoft\Windows\PowerShell\PSReadLine\" "Artifacts\PSReadLine\!username!\" /E /I >nul 2>>errors.txt
 	)
@@ -312,8 +317,9 @@ for /d %%u in ("%users_dir%\*") do (
 for /d %%u in ("%users_dir%\*") do (
     if /i not "%%u"=="%filepath%\Users\Public" if /i not "%%u"=="%filepath%\Users\Default" (
 		set "tempPath=%%u"
-        set "username=!tempPath:*Users=\!"
-        set "username=!username:\=!"
+		for %%x in ("!tempPath!") do (
+			set "username=%%~nx"
+		)
 		echo Collecting !username!'s Shellbags...
         SBECmd.exe -d "Artifacts\Users Registry Hives\!username!" >nul 2>>errors.txt --csv "Artifacts\Shellbags" --csvf "!username!.csv" >nul 2>>errors.txt
 	)
@@ -323,8 +329,9 @@ echo Parsing Browser Logs...
 for /d %%u in ("%users_dir%\*") do (
 	if /i not "%%u"=="%filepath%\Users\Public" if /i not "%%u"=="%filepath%\Users\Default" (
 		set "tempPath=%%u"
-        set "username=!tempPath:*Users=\!"
-        set "username=!username:\=!"
+		for %%x in ("!tempPath!") do (
+			set "username=%%~nx"
+		)
         python WBHistory2CSV.py --browser chrome --file "Artifacts\Chrome History\!username!\History" --output "Artifacts\Chrome History\!username!_Parsed History" >nul 2>>errors.txt
 		python WBHistory2CSV.py --browser edge --file "Artifacts\Edge History\!username!\History" --output "Artifacts\Edge History\!username!_Parsed History" >nul 2>>errors.txt
 		python WBHistory2CSV.py --browser opera --file "Artifacts\Opera History\!username!\History" --output "Artifacts\Opera History\!username!_Parsed History" >nul 2>>errors.txt
@@ -370,15 +377,6 @@ for /d %%D in ("%artifacts_dir%\*") do (
 
 echo.
 echo ====================================================================================
-
-:: Run Hayabusa (--ha flag)
-if "%run_hayabusa%"=="1" (
-    echo Updating Hayabusa Rules...
-	hayabusa-2.18.0-win-aarch64.exe update-rules -q
-	echo Running Hayabusa...
-	hayabusa-2.18.0-win-aarch64.exe csv-timeline -d "Artifacts\Event Logs" -a -A -Q -N -w -o "Artifacts\Detection-Hayabusa.csv"
-	echo ====================================================================================
-)
 
 :: Run Amcache Hunter (--am flag)
 if "%run_amcache%"=="1" (

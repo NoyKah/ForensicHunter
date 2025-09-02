@@ -46,15 +46,13 @@ Before running the script, ensure that the following dependencies are installed 
 
 - **Acquisition with CyLR**: Utilizes **CyLR** to perform data acquisition, ensuring efficient and comprehensive collection of forensic artifacts from the target Windows system.
 
-- **Artifact Parsing with Multiple Tools**: Parses the collected artifacts using a suite of specialized tools, including **MFTECmd**, **AppCompatCacheParser**, **AmcacheParser**, **PECmd**, **SrumECmd**, **sidr**, **EvtxECmd**, **LECmd**, **JLECmd**, **RBCmd**, **SBECmd**, and **Hayabusa**. These tools collectively enable the extraction and analysis of critical data from areas such as the MFT, USNJournal, Prefetch files, Shimcache, SRUM database, search index, event logs, and more.
+- **Artifact Parsing with Multiple Tools**: Parses the collected artifacts using a suite of specialized tools, including **MFTECmd**, **AppCompatCacheParser**, **AmcacheParser**, **PECmd**, **SrumECmd**, **EvtxECmd**, **LECmd**, **JLECmd**, **RBCmd**, and **SBECmd**. These tools collectively enable the extraction and analysis of critical data from areas such as the MFT, USNJournal, Prefetch files, Shimcache, SRUM database, search index, event logs, and more.
 
 - **Custom Python Scripts**:
   - **Find.py**: Searches for specified keywords across all extracted CSV files, compiling any matches into a single consolidated CSV file for easier analysis.
   - **AmcacheHunter.py**: Integrates a Python script that interacts with the VirusTotal API to evaluate the safety of files based on their SHA1 hashes.
 
 - **IOC Search**: Allows investigators to search for Indicators of Compromise (IOCs) within the artifacts, enhancing the investigation process.
-
-- **Hayabusa Integration**: Utilizes Hayabusa for advanced rule-based analysis of event logs to detect suspicious activities.
 
 - **Error Logging**: All errors encountered during execution are logged to `errors.txt` for troubleshooting.
 
@@ -70,7 +68,6 @@ ForensicHunter.bat [flag]
     --am: Run Amcache Hunter after the analysis function.
     --ac: Perform Acquisition.
     --io: Run IOC Search for the specified keyword.
-    --ha: Run Hayabusa after the analysis function.
     /?: Display the help menu.
 ```
 
@@ -153,20 +150,14 @@ Parses browser and download history, converts timestamps to UTC. No additional f
 
 ## License
 
-The project incorporates components licensed under the following licenses:
+The project incorporates components licensed under the following license:
 
-    Apache License 2.0
     MIT License
-    GNU General Public License v3.0
-    CeCILL Free Software License Agreement v2.1
-
-Each license is included in the repository, allowing users to review the applicable terms and ensure compliance. The multi-license setup provides flexibility for users while upholding the open-source contributions of each included tool.	
+	
 
 ## Special Thanks
 - https://ericzimmerman.github.io/#!index.md
 - https://github.com/orlikoski/CyLR
-- https://github.com/strozfriedberg/sidr
-- https://github.com/ANSSI-FR/bmc-tools
 - https://github.com/GuyEldad/WBHistory2CSV
 
 
